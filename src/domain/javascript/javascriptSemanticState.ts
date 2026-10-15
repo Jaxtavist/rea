@@ -82,6 +82,8 @@ export interface JavaScriptSemanticAnalysisState {
   /** Bounds encountered during this analysis, independent of later projections. */
   readonly valueResourceLimits: Set<JavaScriptSemanticResourceLimit>;
   readonly parentsByNode: WeakMap<t.Node, t.Node>;
+  /** Await sites retained by the definitions pass for lazy promise-result indexing. */
+  readonly awaitSites: t.AwaitExpression[];
   readonly scopes: JavaScriptSemanticScopeState[];
   readonly scopesById: Map<string, JavaScriptSemanticScopeState>;
   /** Scope boundaries and descendant scopes resolved on demand. */
