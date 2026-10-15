@@ -42,6 +42,46 @@ Current inventory Evidence requires scoped `coverage` with a `complete` or
 `unknown` status. Consumers use this producer-owned fact and reject records
 without it; limitations are explanatory and do not supply or infer coverage.
 Pages from one inventory must carry the same coverage declaration.
+`cluster_artifacts` extends this to many artifacts at once. Pass two or more
+`inspect_artifact` inventories inline as `{ "label": ..., "evidence": ... }`
+and it partitions them by exact root content digest (`root-sha256` is the only
+family tier) and indexes every graph member as shared, partially shared or
+unique. Labels are caller text and are never parsed as identity. A member whose
+inventory is incomplete, carries integrity contradictions, or declares a
+different `coverage.scope` than the strict majority is reported in
+`unknown_members` with its reason, never as different from the others. A
+re-packed container with identical members has no family and appears only in
+the member index; a member whose root digest no other member shares is counted
+in `summary.members_without_family` and is likewise not evidence of
+difference. `status` is `partitioned` when every examined member was compared,
+`partial` when some could not be, and `unknown` when none could.
+`offset`/`limit` page family rows only: `shared_members`,
+`partially_shared_members` and `unique_members` are never paged away.
+`shared_member_minimum` defaults to every member;
+`coverage.shared_member_minimum` reports the value used, and
+`coverage.member_index_withheld` is set when the examined node budget was
+exhausted.
+A family asserts byte identity at the inspected root, so it needs a producer
+digest of that root's own bytes. A root whose digest is derived from its
+inventory graph instead (a directory root, whose digest covers member names and
+child identities, with unread entries such as symlink targets uncommitted) is
+compared, indexed and counted, but never placed in a family;
+`coverage.members_without_byte_root_digest` reports how many, and the reason
+appears in `limitations`. Directory nodes are likewise left out of the member
+index because their identity is graph-derived;
+`coverage.nodes_without_byte_identity` counts them. Each index row carries
+`observations` of `{ label, evidence_id }` and a `member_count` counted per
+member, so repeated caller labels never merge two members and a row keeps its
+source Evidence even when no family row exists. Inventory completeness and
+coverage scope are separate facts: `members_with_complete_inventory` and
+`members_with_unknown_inventory` describe what each member declared, while
+`members_outside_member_scope` counts members with complete inventories
+whose declared scope is not the clustered scope (with no strict majority, every
+complete member). An incomplete member is explained by
+`members_with_unknown_inventory` instead and keeps its own declared scope in its
+row.
+`coverage.families_offset` and `coverage.families_limit` state the page the
+call returned.
 
 Function dossiers can declare per-facet coverage in the optional
 `normalized_result.facet_availability` map. Each supplied facet is either
